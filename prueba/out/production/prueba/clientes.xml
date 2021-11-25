@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<info_cliente>
+    <cliente>
+        <nombre>Pedro</nombre>
+        <apellido1>Antúnez</apellido1>
+        <apellido2>Ramírez</apellido2>
+    </cliente>
+    <pedidos>
+        <pedido>
+            <idPedido>105</idPedido>
+            <productos>
+                <producto>
+                <nombre>Vino</nombre>
+                <precio>3.00</precio>
+            </producto>
+            </productos>
+        </pedido>
+    </pedidos>
+</info_cliente>
