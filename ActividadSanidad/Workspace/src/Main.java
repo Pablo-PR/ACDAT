@@ -8,6 +8,11 @@ public class Main {
     private static String insertPacientes = "INSERT INTO asegurado (nombre, edad) VALUES (?, ?)";
     private static String insertVisitas = "INSERT INTO visitaCentro (codigoCentro, idAsegurado) VALUES (?, ?)";
     private static String mostrarPacientes = "SELECT DISTINCT a.nombre FROM asegurado a INNER JOIN visitaCentro vc ON a.idAsegurado = vc.idAsegurado ORDER BY a.nombre";
+    private static String crearTablaCentro = "CREATE TABLE centro (" +
+            "idCentro int(25) NOT NULL," +
+            "nombre varchar(25)," +
+            "PRIMARY KEY (idCentro))";
+    private static String insertDatosCentro = "INSERT INTO centro (idCentro, nombre) VALUES (?, ?)";
 
     public static void main(String[] args) {
         Connection con = null;
@@ -22,21 +27,8 @@ public class Main {
 
             cargaDatos(con, dbmd);
             listarPacientes(con);
-            creaTabla(con);
-
-//            try {
-//                PreparedStatement psInsert = con.prepareStatement("INSERT INTO empleado (NOMEMP, APE1EMP, APE2EMP) VALUES(?, ?, ?)");
-//                con.setAutoCommit(false);
-//
-////                for (int i = 0; i < datosEmpleados.length; i++){
-////                    for (int x = 0; x < datosEmpleados.length; x++){
-////                        psInsert.setString(x + 1, datosEmpleados[i][x]);
-////                    }
-////                    psInsert.addBatch();
-////                }
-//                psInsert.executeBatch();
-//                con.commit();
-
+            //creaTabla(con);
+            realizaMigracion(con, prop);
         } catch (Exception e) {
             System.err.println("Error de conexión.");
             e.printStackTrace();
@@ -51,7 +43,37 @@ public class Main {
         }
     }
 
-    private static void creaTabla(Connection con) {
+    private static void realizaMigracion(Connection con, Properties prop) throws SQLException {
+        int id;
+        String nombre;
+        Connection conSanidadExterna = null;
+        conSanidadExterna = DriverManager.getConnection("jdbc:mysql://localhost:3306/sanidad_externa", prop);
+
+        PreparedStatement cargaDatosSanidadExterna = conSanidadExterna.prepareStatement("SELECT * FROM centro_externo");
+        PreparedStatement insertarDatosSanidad = con.prepareStatement(insertDatosCentro);
+
+        ResultSet datosSanidadExterna = cargaDatosSanidadExterna.executeQuery();
+
+        con.setAutoCommit(false);
+
+        while (datosSanidadExterna.next()){
+            id = datosSanidadExterna.getInt(1);
+            nombre = datosSanidadExterna.getString(2);
+
+            insertarDatosSanidad.setInt(1, id);
+            insertarDatosSanidad.setString(2, nombre);
+
+            insertarDatosSanidad.addBatch();
+        }
+
+        insertarDatosSanidad.executeBatch();
+        con.commit();
+    }
+
+    private static void creaTabla(Connection con) throws SQLException {
+        PreparedStatement crearTabla = con.prepareStatement(crearTablaCentro);
+
+        crearTabla.executeUpdate();
     }
 
     private static void listarPacientes(Connection con) throws SQLException {
