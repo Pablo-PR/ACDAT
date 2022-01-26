@@ -1,7 +1,10 @@
+package actividad1;
+
 public class Persona {
 	private String nombre;
 	private int edad;
 	private String dni;
+	private Cuenta miCuenta;
 
 	public Persona(String nombre, int edad, String dni) {
 		this.nombre = nombre;
@@ -13,19 +16,36 @@ public class Persona {
 	}
 	@Override
 	public String toString() {
-		return "[Persona --> Nombre=" + nombre + ", edad=" + edad + "]";
+		if (miCuenta == null){
+			return "[actividad1.Persona --> Nombre: " + nombre + ", Edad: " + edad + ", DNI: " + dni + "]";
+		}
+		else {
+			return "[actividad1.Persona --> Nombre: " + nombre + ", Edad: " + edad + ", DNI: " + dni + ", Cuenta: " + miCuenta.getNumCuenta() + "]";
+		}
 	}
+
 	public String getNombre() {
 		return nombre;
 	}
+
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
 	}
+
 	public int getEdad() {
 		return edad;
 	}
+
 	public void setEdad(int edad) {
 		this.edad = edad;
+	}
+
+	public String getDni() {
+		return dni;
+	}
+
+	public void setDni(String dni) {
+		this.dni = dni;
 	}
 	
 //	
@@ -35,6 +55,14 @@ public class Persona {
 		int result = 1;
 		result = prime * result + ((nombre == null) ? 0 : nombre.hashCode());
 		return result;
+	}
+
+	public Cuenta getMiCuenta() {
+		return miCuenta;
+	}
+
+	public void setMiCuenta(Cuenta miCuenta) {
+		this.miCuenta = miCuenta;
 	}
 	
 	@Override
