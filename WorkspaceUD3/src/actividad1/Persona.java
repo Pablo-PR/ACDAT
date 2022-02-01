@@ -1,6 +1,6 @@
 package actividad1;
 
-public class Persona {
+public class Persona implements Comparable<Persona>{
 	private String nombre;
 	private int edad;
 	private String dni;
@@ -83,5 +83,10 @@ public class Persona {
 			return false;
 		}
 		return true;
-	}	
+	}
+
+	@Override
+	public int compareTo(Persona o) {
+		return (int)this.getMiCuenta().getSaldo() - (int)o.getMiCuenta().getSaldo();
+	}
 }

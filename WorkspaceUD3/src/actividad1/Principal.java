@@ -3,6 +3,8 @@ package actividad1;
 import java.util.Scanner;
 
 import com.db4o.*;
+import com.db4o.query.Predicate;
+import com.db4o.query.QueryComparator;
 
 public class Principal {
 	private static final String BD_PERSONAS = "bd_txt/personas.oo";
@@ -16,7 +18,7 @@ public class Principal {
 		do {
 			opc = solicitarOpcion();
 			tratarOpcion(opc,db);
-		} while (opc != 6);
+		} while (opc != 10);
 	
 		db.close();		
 	}
@@ -56,20 +58,107 @@ public class Principal {
 			consultarPersonasPorDni(db, dni);
 			break;
 		case 5:
-			cuenta = crearCuenta();
+			cuenta = crearCuenta(db);
 			dni = solicitarCadena("DNI: ");
 			asociarCuentaPersona(db, cuenta, dni);
+			break;
+		case 6:
+			dni = solicitarCadena("DNI: ");
+			consultarDatosPorDni(db, dni);
+			break;
+		case 7:
+			dni = solicitarCadena("DNI: ");
+			borrarPersona(db, dni);
+			break;
+		case 8:
+			consultarCuentasExistentes(db);
+			break;
+		case 9:
+			consultarPersonasSaldo(db);
 			break;
 		}
 	}
 
-	private static Cuenta crearCuenta() {
+	private static void consultarPersonasSaldo(ObjectContainer db) {
+		double saldo;
+
+		System.out.println("Introduce el saldo para filtrar:");
+		saldo = Integer.parseInt(teclado.nextLine());
+
+		ObjectSet<Persona> result = db.query(
+			new Predicate<Persona>() {
+				@Override
+				public boolean match(Persona p) {
+					return (p.getMiCuenta().getSaldo() > saldo);
+				}
+			},
+			(QueryComparator<Persona>) (persona1, persona2) -> persona1.compareTo(persona2)
+		);
+
+		for (Persona p : result){
+			System.out.println(p);
+		}
+	}
+
+	private static void consultarCuentasExistentes(ObjectContainer db) {
+		Cuenta cuenta = new Cuenta();
+		ObjectSet<Cuenta> result = db.queryByExample(cuenta);
+
+		if (result.size()>0){
+			System.out.println("Número de cuentas " + result.size());
+			for (Cuenta cuentaAux: result) {
+				System.out.println(cuentaAux);
+			}
+		}
+	}
+
+	private static void borrarPersona(ObjectContainer db, String dni) {
+		Persona persona = new Persona(null, 0, dni);
+		ObjectSet<Persona> result = db.queryByExample(persona);
+
+		if (result.size()!=0){
+			if (result.get(0).getMiCuenta()!=null){
+				db.delete(result.get(0));
+				db.delete(result.get(0).getMiCuenta());
+			}
+			else {
+				db.delete(result.get(0));
+			}
+
+			System.out.println("Datos eliminados correctamente");
+		}
+		else{
+			System.out.println("No existe ninguna persona con DNI: " + dni);
+		}
+	}
+
+	private static void consultarDatosPorDni(ObjectContainer db, String dni) {
+		Persona persona = new Persona(null, 0, dni);
+		ObjectSet<Persona> result = db.queryByExample(persona);
+
+		if (result.size()!=0){
+			System.out.println(result.get(0));
+		}
+		else{
+			System.out.println("No existe ninguna persona con DNI: " + dni);
+		}
+	}
+
+	private static Cuenta crearCuenta(ObjectContainer db) {
 		Cuenta cuenta;
+		Cuenta cuentaAux;
+		ObjectSet<Cuenta> result;
 		int numCuenta;
 		int saldo;
 
-		System.out.println("Introduce el número de cuenta: ");
-		numCuenta = Integer.parseInt(teclado.nextLine());
+		do {
+			System.out.println("Introduce el número de cuenta: ");
+			numCuenta = Integer.parseInt(teclado.nextLine());
+
+			cuentaAux = new Cuenta(numCuenta, 0);
+
+			result = db.queryByExample(cuentaAux);
+		} while(result.size()!=0);
 
 		System.out.println("Introduce el saldo: ");
 		saldo = Integer.parseInt(teclado.nextLine());
@@ -144,17 +233,21 @@ public class Principal {
 	 */
 	private static int solicitarOpcion() {
 		int opc;
-		System.out.println("1.Insertar persona en BD");
+		System.out.println("\n1.Insertar persona en BD");
 		System.out.println("2.Consutar BD completa");
-		System.out.println("3.Consultar personas con una edad");
-		System.out.println("4.Modificar datos persona por DNI");
-		System.out.println("5.Asociar cuenta a persona por DNI");
-		System.out.println("6.Salir");
+		System.out.println("3.Consultar personas según edad");
+		System.out.println("4.Modificar datos de una persona");
+		System.out.println("5.Asociar cuenta a una persona");
+		System.out.println("6.Consultar datos de una persona por DNI");
+		System.out.println("7.Borrar a una persona y su cuenta");
+		System.out.println("8.Consultar las cuentas existentes");
+		System.out.println("9.Consultar personas según saldo");
+		System.out.println("10.Salir");
 		
 		do {
 			System.out.println("Introduce opcion");
 			opc = Integer.parseInt(teclado.nextLine());
-		} while (opc < 1 || opc > 6);
+		} while (opc < 1 || opc > 10);
 		return opc;
 	}
 
@@ -208,20 +301,11 @@ public class Principal {
 		boolean dniRepetido = false;
 		int i = 0;
 		Persona persona = crearPersona();
-		Persona patron = new Persona();
+		Persona patron = new Persona(null, 0, persona.getDni());
+
 		ObjectSet<Persona> result = db.queryByExample(patron);
 
-		while (result.hasNext() && !dniRepetido) {
-			patron = result.get(i);
-
-			if (persona.equals(patron)){
-				dniRepetido = true;
-			}
-
-			i++;
-		}
-
-		if (dniRepetido) {
+		if (result.size()!=0){
 			System.out.println("DNI ya introducido.");
 		}
 		else {

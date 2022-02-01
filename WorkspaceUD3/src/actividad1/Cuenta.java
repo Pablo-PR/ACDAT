@@ -11,6 +11,9 @@ public class Cuenta {
         this.saldo = saldo;
     }
 
+    public Cuenta(){
+    }
+
     public int getNumCuenta() {
         return numCuenta;
     }
@@ -38,5 +41,12 @@ public class Cuenta {
     @Override
     public int hashCode() {
         return Objects.hash(numCuenta);
+    }
+
+    @Override
+    public String toString() {
+        return "{numCuenta=" + numCuenta +
+                ", saldo=" + saldo +
+                '}';
     }
 }
