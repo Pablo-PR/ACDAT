@@ -26,6 +26,10 @@ public class Restaurante {
         this.nombre = nombre;
     }
 
+    public void setListProductos(ArrayList<Producto> listProductos) {
+        this.listProductos = listProductos;
+    }
+
     @Override
     public String toString() {
         return "Restaurante{" +
