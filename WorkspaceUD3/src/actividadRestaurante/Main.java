@@ -36,7 +36,41 @@ public class Main {
             case 2:
                 registrarProducto(db);
                 break;
+            case 3:
+                asociarEmpleado(db);
+                break;
         }
+    }
+
+    private static void asociarEmpleado(ObjectContainer db) {
+        String nombreRestaurante;
+        Restaurante restauranteAux;
+        Restaurante restaurante;
+        ObjectSet<Restaurante> result;
+
+        nombreRestaurante = controlRestauranteExistente(db);
+        restauranteAux = new Restaurante(nombreRestaurante);
+        result = db.queryByExample(nombreRestaurante);
+        restaurante = result.get(0);
+
+        restaurante.addEmpleado(crearEmpleado(db));
+
+        db.store(restaurante);
+    }
+
+    private static String controlRestauranteExistente(ObjectContainer db) {
+        String nombreRestaurante;
+        Restaurante restaurante;
+        ObjectSet<Restaurante> result;
+
+        do {
+            nombreRestaurante = solicitarCadena("Nombre del restaurante al que se va a asociar el empleado: ");
+
+            restaurante = new Restaurante(nombreRestaurante);
+            result = db.queryByExample(restaurante);
+        } while (result.size()==0);
+
+        return nombreRestaurante;
     }
 
     private static void registrarProducto(ObjectContainer db) {
@@ -45,7 +79,6 @@ public class Main {
         Restaurante restauranteAux;
         ObjectSet<Restaurante> result;
         String opc;
-        ArrayList<Producto> listProductos = new ArrayList<>();
 
         nombreRestaurante = solicitarCadena("Nombre del restaurante: ");
         restauranteAux = new Restaurante(nombreRestaurante);
@@ -60,9 +93,7 @@ public class Main {
                 opc = solicitarCadena("¿Desea introducir un producto? (S/N)").toUpperCase();
 
                 if (opc.equals("S")) {
-                    listProductos.add(crearProducto());
-                } else {
-                    restaurante.setListProductos(listProductos);
+                    restaurante.addProducto(crearProducto());
                 }
             } while (opc.equals("S"));
 
@@ -121,7 +152,7 @@ public class Main {
         ArrayList<Empleado> listEmpleados = new ArrayList<>();
         Restaurante restaurante = null;
 
-        nombre = controlNombreRestaurante(db);
+        nombre = controlRestauranteRepetido(db);
 
         //Realizamos un bucle para que se puedan introducir empleados de manera indefinida hasta que se especifique lo contrario.
         do {
@@ -141,7 +172,7 @@ public class Main {
     }
 
     //Método para controlar que el nombre introducido del restaurante no exista ya.
-    private static String controlNombreRestaurante(ObjectContainer db) {
+    private static String controlRestauranteRepetido(ObjectContainer db) {
         Restaurante restauranteAux;
         ObjectSet<Restaurante> result;
         String nombre;

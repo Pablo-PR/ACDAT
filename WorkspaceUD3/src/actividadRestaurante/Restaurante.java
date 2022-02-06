@@ -26,8 +26,12 @@ public class Restaurante {
         this.nombre = nombre;
     }
 
-    public void setListProductos(ArrayList<Producto> listProductos) {
-        this.listProductos = listProductos;
+    public void addProducto(Producto producto) {
+        listProductos.add(producto);
+    }
+
+    public void addEmpleado(Empleado empleado) {
+        listEmpleados.add(empleado);
     }
 
     @Override
