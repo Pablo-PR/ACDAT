@@ -10,11 +10,14 @@ public class Restaurante {
 
     public Restaurante(String nombre) {
         this.nombre = nombre;
+        this.listEmpleados = new ArrayList<>();
+        this.listProductos = new ArrayList<>();
     }
 
     public Restaurante(String nombre, ArrayList<Empleado> listEmpleados) {
         this.nombre = nombre;
         this.listEmpleados = listEmpleados;
+        this.listProductos = new ArrayList<>();
     }
 
 
@@ -24,6 +27,22 @@ public class Restaurante {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public void addProducto(Producto producto) {
+        listProductos.add(producto);
+    }
+
+    public void addEmpleado(Empleado empleado) {
+        listEmpleados.add(empleado);
+    }
+
+    public ArrayList<Empleado> getListEmpleados() {
+        return listEmpleados;
+    }
+
+    public ArrayList<Producto> getListProductos() {
+        return listProductos;
     }
 
     @Override
