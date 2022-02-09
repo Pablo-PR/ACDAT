@@ -6,8 +6,6 @@ import com.db4o.ObjectSet;
 import com.db4o.config.EmbeddedConfiguration;
 import com.db4o.query.Predicate;
 import com.db4o.query.QueryComparator;
-
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
@@ -60,16 +58,9 @@ public class Main {
     }
 
     private static void busquedaEmpleadosPorSalario(ObjectContainer db) {
-        String nombreRestaurante = controlRestauranteExistente(db);
+        Restaurante restaurante = controlRestauranteExistente(db);
         double salarioMin = Double.parseDouble(solicitarCadena("Introduce el salario mínimo a filtrar: "));
         double salarioMax = Double.parseDouble(solicitarCadena("Introduce el salario máximo a filtrar: "));
-        Restaurante restauranteAux;
-        Restaurante restaurante;
-        ObjectSet<Restaurante> resultRestaurante;
-
-        restauranteAux = new Restaurante(nombreRestaurante);
-        resultRestaurante = db.queryByExample(restauranteAux);
-        restaurante = resultRestaurante.get(0);
 
         ObjectSet<Empleado> resultEmpleado = db.query(
                 new Predicate<Empleado>() {
@@ -82,7 +73,6 @@ public class Main {
         );
 
         listarBusquedaEmpleados(resultEmpleado);
-
     }
 
     private static void busquedaEmpleadosPorCadena(ObjectContainer db) {
@@ -146,16 +136,8 @@ public class Main {
     }
 
     private static void busquedaProductos(ObjectContainer db) {
-        String nombreRestaurante;
         String consulta;
-        Restaurante restauranteAux;
-        Restaurante restaurante;
-        ObjectSet<Restaurante> resultRestaurante;
-
-        nombreRestaurante = controlRestauranteExistente(db);
-        restauranteAux = new Restaurante(nombreRestaurante);
-        resultRestaurante = db.queryByExample(restauranteAux);
-        restaurante = resultRestaurante.get(0);
+        Restaurante restaurante = controlRestauranteExistente(db);
 
         consulta = solicitarCadena("Introduce el nombre del producto buscado: ");
 
@@ -187,73 +169,52 @@ public class Main {
     }
 
     private static void asociarEmpleado(ObjectContainer db) {
-        String nombreRestaurante;
-        Restaurante restauranteAux;
-        Restaurante restaurante;
-        ObjectSet<Restaurante> result;
-
-        nombreRestaurante = controlRestauranteExistente(db);
-        restauranteAux = new Restaurante(nombreRestaurante);
-        result = db.queryByExample(restauranteAux);
-        restaurante = result.get(0);
+        Restaurante restaurante = controlRestauranteExistente(db);
 
         restaurante.addEmpleado(crearEmpleado(db));
 
         db.store(restaurante);
     }
 
-    private static String controlRestauranteExistente(ObjectContainer db) {
+    //Método para controlar que el restaurante insertado exista.
+    private static Restaurante controlRestauranteExistente(ObjectContainer db) {
         String nombreRestaurante;
-        Restaurante restaurante;
+        Restaurante restauranteAux;
         ObjectSet<Restaurante> result;
 
         do {
             nombreRestaurante = solicitarCadena("Nombre del restaurante: ");
 
-            restaurante = new Restaurante(nombreRestaurante);
-            result = db.queryByExample(restaurante);
+            restauranteAux = new Restaurante(nombreRestaurante);
+            result = db.queryByExample(restauranteAux);
         } while (result.size()==0);
 
-        return nombreRestaurante;
+        return result.get(0);
     }
 
     private static void registrarProducto(ObjectContainer db) {
-        String nombreRestaurante;
-        Restaurante restaurante;
-        Restaurante restauranteAux;
-        ObjectSet<Restaurante> result;
         String opc;
+        Restaurante restaurante = controlRestauranteExistente(db);
 
-        nombreRestaurante = solicitarCadena("Nombre del restaurante: ");
-        restauranteAux = new Restaurante(nombreRestaurante);
-        result = db.queryByExample(restauranteAux);
+        do {
+            opc = solicitarCadena("¿Desea introducir un producto? (S/N)").toUpperCase();
 
-        if (result.size() == 0) {
-            System.out.println("No existe ningún restaurante con ese nombre.");
-        } else {
-            restaurante = result.get(0);
+            if (opc.equals("S")) {
+                restaurante.addProducto(crearProducto(db, restaurante.getNombre()));
+            }
+        } while (opc.equals("S"));
 
-            do {
-                opc = solicitarCadena("¿Desea introducir un producto? (S/N)").toUpperCase();
-
-                if (opc.equals("S")) {
-                    restaurante.addProducto(crearProducto());
-                }
-            } while (opc.equals("S"));
-
-            db.store(restaurante);
-        }
+        db.store(restaurante);
     }
 
-    private static Producto crearProducto() {
-        String nombre;
-        String nomCategoria;
+    private static Producto crearProducto(ObjectContainer db, String nombreRestaurante) {
+        String nombre, nomCategoria;
         double precio;
         Producto producto;
         Categoria[] listCategorias = Categoria.values();
         boolean categoriaCorrecta = false;
 
-        nombre = solicitarCadena("Nombre del producto: ");
+        nombre = controlProductoRepetido(db, nombreRestaurante);
 
         do {
             nomCategoria = solicitarCadena("Categoría a la que pertenece (Bebida, Comida, Postre): ");
@@ -272,38 +233,39 @@ public class Main {
         return producto;
     }
 
-    private static void mostrarBD(ObjectContainer db) {
-        Restaurante restauranteAux = new Restaurante(null, null);
-        ObjectSet<Restaurante> result = db.queryByExample(restauranteAux);
+    private static String controlProductoRepetido(ObjectContainer db, String nombreRestaurante) {
+        String nombre;
+        ObjectSet<Restaurante> result = db.queryByExample(new Restaurante(nombreRestaurante));
+        Restaurante restaurante = result.get(0);
+        boolean productoRepetido = false;
 
-        if (result.size() == 0) {
-            System.out.println("BD vacía.");
-        } else {
-            for (Restaurante restaurante: result) {
-                System.out.println(restaurante);
+        do {
+            nombre = solicitarCadena("Nombre del producto: ");
+
+            for (Producto p: restaurante.getListProductos()) {
+                if (p.getNombre().equals(nombre)) {
+                    productoRepetido = true;
+                }
+                else {
+                    productoRepetido = false;
+                }
             }
-        }
+
+        } while (productoRepetido);
+
+        return nombre;
     }
 
     private static void altaRestaurante(ObjectContainer db) {
         String opcInsertarEmpleado;
-        String nombre;
-        ArrayList<Empleado> listEmpleados = new ArrayList<>();
-        Restaurante restaurante = null;
-
-        nombre = controlRestauranteRepetido(db);
+        Restaurante restaurante = controlRestauranteRepetido(db);
 
         //Realizamos un bucle para que se puedan introducir empleados de manera indefinida hasta que se especifique lo contrario.
         do {
             opcInsertarEmpleado = solicitarCadena("¿Desea introducir un empleado? (S/N)").toUpperCase();
 
-            //Controlamos los casos en los que se crea un restaurante con empleados y sin ellos.
-            if (opcInsertarEmpleado.equals("S")){
-                listEmpleados.add(crearEmpleado(db));
-            } else if (opcInsertarEmpleado.equals("N") && listEmpleados.size() == 0){
-                restaurante = new Restaurante(nombre);
-            } else if (opcInsertarEmpleado.equals("N") && listEmpleados.size() != 0) {
-                restaurante = new Restaurante(nombre, listEmpleados);
+            if (opcInsertarEmpleado.equals("S")) {
+                restaurante.addEmpleado(crearEmpleado(db));
             }
         } while (opcInsertarEmpleado.equals("S"));
 
@@ -311,14 +273,14 @@ public class Main {
     }
 
     //Método para controlar que el nombre introducido del restaurante no exista ya.
-    private static String controlRestauranteRepetido(ObjectContainer db) {
+    private static Restaurante controlRestauranteRepetido(ObjectContainer db) {
         Restaurante restauranteAux;
         ObjectSet<Restaurante> result;
         String nombre;
 
         do {
             nombre = solicitarCadena("Introduce el nombre del restaurante:");
-            restauranteAux = new Restaurante(nombre, null);
+            restauranteAux = new Restaurante(nombre);
 
             result = db.queryByExample(restauranteAux);
 
@@ -327,23 +289,20 @@ public class Main {
             }
         }while (result.size() != 0);
 
-        return nombre;
+        return new Restaurante(nombre);
     }
 
     private static Empleado crearEmpleado(ObjectContainer db) {
-        String nombreEmpleado;
-        String apellido1;
-        String apellido2;
-        String dni;
+        String nombreEmpleado, apellido1, apellido2, dni;
         Nomina nomina;
         Empleado empleado;
 
         //Pedimos los datos del empleado.
         dni = controlDni(db);
-        nombreEmpleado = solicitarCadena("Introduce el nombre del empleado:");
-        apellido1 = solicitarCadena("Introduce el primer apellido del empleado:");
-        apellido2 = solicitarCadena("Introduce el segundo apellido del empleado:");
-        nomina = new Nomina(solicitarCadena("Introduce el IBAN de la cuenta:"), Double.parseDouble(solicitarCadena("Introduce el sueldo:")));
+        nombreEmpleado = solicitarCadena("Introduce el nombre del empleado: ");
+        apellido1 = solicitarCadena("Introduce el primer apellido del empleado: ");
+        apellido2 = solicitarCadena("Introduce el segundo apellido del empleado: ");
+        nomina = new Nomina(solicitarCadena("Introduce el IBAN de la cuenta: "), Double.parseDouble(solicitarCadena("Introduce el sueldo: ")));
 
         //Creamos al empleado.
         empleado = new Empleado(nombreEmpleado, apellido1, apellido2, dni, nomina);
@@ -371,9 +330,9 @@ public class Main {
         return dni;
     }
 
+    //Método para realizar apartado A.
     private static void introducirRestAccdat(ObjectContainer db) {
-        Restaurante restauranteAux = new Restaurante("RestAccdat");
-        ObjectSet<Restaurante> result = db.queryByExample(restauranteAux);
+        ObjectSet<Restaurante> result = db.queryByExample(new Restaurante("RestAccdat"));
 
         if (result.size() == 0) {
             Restaurante restaurante = new Restaurante("RestAccdat");
@@ -383,6 +342,19 @@ public class Main {
             restaurante.addProducto(new Producto("Pastel vegano", "Postre", 2.75));
 
             db.store(restaurante);
+        }
+    }
+
+    private static void mostrarBD(ObjectContainer db) {
+        Restaurante restauranteAux = new Restaurante(null);
+        ObjectSet<Restaurante> result = db.queryByExample(restauranteAux);
+
+        if (result.size() == 0) {
+            System.out.println("BD vacía.");
+        } else {
+            for (Restaurante restaurante: result) {
+                System.out.println(restaurante);
+            }
         }
     }
 

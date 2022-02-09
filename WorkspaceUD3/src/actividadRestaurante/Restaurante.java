@@ -14,12 +14,6 @@ public class Restaurante {
         this.listProductos = new ArrayList<>();
     }
 
-    public Restaurante(String nombre, ArrayList<Empleado> listEmpleados) {
-        this.nombre = nombre;
-        this.listEmpleados = listEmpleados;
-        this.listProductos = new ArrayList<>();
-    }
-
 
     public String getNombre() {
         return nombre;
